@@ -3,25 +3,24 @@ package day2
 import (
 	"strconv"
 	"strings"
-
-	"github.com/go-playground/locales/bo"
 )
 
-func Run(lines []string) (int64, int) {
-	ans1 := partOne(lines)
-	return ans1, 0
+func Run(lines []string) (int64, int64) {
+	ans1 := partOne(lines, isValidIdPart1)
+	ans2 := partOne(lines, isValidIdPart2)
+	return ans1, ans2
 }
 
-func partOne(lines [] string) int64 {
+func partOne(lines [] string, predicate func(string) bool) int64 {
 	var sum int64 = 0
 
 	for _, line := range lines {
-		sum += processLine(line)
+		sum += processLine(line, predicate)
 	}
 	return sum
 }
 
-func processLine(line string) int64 {
+func processLine(line string, predicate func(string) bool) int64 {
 	var invalidNumbersSum int64 = 0
 	rangeList := strings.SplitSeq(line, ",")
 
@@ -34,7 +33,7 @@ func processLine(line string) int64 {
 			panic("Failed to convert ranges to ints")
 		}
 
-		checkedRange := checkValidity(start, end, isValidIdPart1)
+		checkedRange := checkValidity(start, end, predicate)
 		for _, invalidNumber := range checkedRange {
 			invalidNumbersSum += invalidNumber
 		}
@@ -47,15 +46,37 @@ func isValidIdPart1(numStr string) bool {
 	strLength := len(numStr)
 
 	if mod(strLength, 2) != 0 {
-		return true
+		return false
 	}
 
-	return !(numStr[:strLength/2] == numStr[strLength/2:])
+	return numStr[:strLength/2] == numStr[strLength/2:]
 }
 
 func isValidIdPart2(numStr string) bool {
-	// part two coming soon
-	return true
+	strLen := len(numStr)
+
+	for i := 1; i < strLen; i++ {
+
+		if strLen % i != 0 {
+			continue
+		}
+
+		subStr := numStr[:i]
+		j := 0
+
+		for j < strLen && j + i <= strLen {
+			if subStr != numStr[j:j+i] {
+				break
+			}
+			j+=i
+		}
+
+		if j == strLen {
+			return true
+		}
+	}
+
+	return false
 }
 
 func checkValidity(start, end int64, predicate func(string) bool) []int64 {
@@ -64,7 +85,7 @@ func checkValidity(start, end int64, predicate func(string) bool) []int64 {
 	for i := start; i <= end; i ++ {
 		numStr := strconv.FormatInt(i, 10)
 
-		if !predicate(numStr) {
+		if predicate(numStr) {
 			result = append(result, i)
 		}
 	}
